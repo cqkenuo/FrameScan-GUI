@@ -21,9 +21,9 @@ import frozen_dir, queue
 SETUP_DIR = frozen_dir.app_path()
 sys.path.append(SETUP_DIR)
 DB_NAME = 'POC_DB.db'
-version = '1.2.9'
+version = '1.3.0'
 plugins_dir_name = 'Plugins/'
-update_time = '20200816'
+update_time = '20200824'
 # 禁用安全警告
 # time.strftime('%Y-%m-%d-%H.%M.%S', time.localtime(time.time()))
 requests.packages.urllib3.disable_warnings()
@@ -362,7 +362,7 @@ class MainWindows(QtWidgets.QMainWindow, Ui_MainWindow):  # 主窗口
             sql_poc = "SELECT cmsname,pocname,pocfilename from POC where pocfilename !=''"
             poc_dict = self.sql_search(sql_poc,'dict')
             # print(self.poc_dict)
-            sql_exp = "SELECT cmsname,pocname,pocfilename,expdescription from POC where pocfilename !=''"
+            sql_exp = "SELECT cmsname,pocname,pocfilename,expdescription from POC where expfilename !=''"
             exp_dict = self.sql_search(sql_exp,'dict')
             # print(values)
         except Exception as e:
@@ -447,7 +447,7 @@ class MainWindows(QtWidgets.QMainWindow, Ui_MainWindow):  # 主窗口
             else:
                 self.WChild_info.exp_file_path.setText("Plugins/" + values[0][1] + '/' + values[0][3])
             self.WChild_info.vuln_url.setText('<a href="'+values[0][5]+'">'+values[0][5]+'</a>')
-            self.WChild_info.vuln_miaoshu.setText(values[0][4])
+            self.WChild_info.vuln_miaoshu.setText(values[0][6])
             return 0
         else:
             return
@@ -767,13 +767,18 @@ class MainWindows(QtWidgets.QMainWindow, Ui_MainWindow):  # 主窗口
         exp_path = plugins_dir_name+'/'+cms_name+'/'+exp_file_name[0][0]
         cookie= self.Ui.vuln_lineEdit_cookie.text()
         heads = self.Ui.plainTextEdit_heads.toPlainText()
+        heads_dict  = {}
+        heads = heads.split('\n')
+        for head in heads:
+            head = head.split(':')
+            heads_dict[head[0].strip()] = head[1].strip()
         if exp_type=='cmd':
             cmd = self.Ui.vuln_exp_input_cmd.text()
             self.Ui.vuln_exp_textEdit_log.append(
                 "[%s]命令执行:%s" % ((time.strftime('%H:%M:%S', time.localtime(time.time()))), cmd))
             try:
                 nnnnnnnnnnnn1 = importlib.machinery.SourceFileLoader(exp_path[:-3], exp_path).load_module()
-                nnnnnnnnnnnn1.run(self,url,heads,cookie,cmd)
+                nnnnnnnnnnnn1.run(self,url,heads_dict,cookie,cmd)
             except Exception as  e:
                 self.Ui.textEdit_result.append(
                     "[%s]Error:%s脚本执行错误！\n[Exception]:\n%s" % (
@@ -803,7 +808,7 @@ class MainWindows(QtWidgets.QMainWindow, Ui_MainWindow):  # 主窗口
                 self.Ui.vuln_exp_textEdit_log.append(
                             "[%s]反弹Shell:%s:%s %s" % ((time.strftime('%H:%M:%S', time.localtime(time.time()))), ip,port,shelltype))
                 nnnnnnnnnnnn1 = importlib.machinery.SourceFileLoader(exp_path[:-3], exp_path).load_module()
-                nnnnnnnnnnnn1.run(self,url,heads,cookie,shellcmd,ip,int(port))
+                nnnnnnnnnnnn1.run(self,url,heads_dict,cookie,shellcmd,ip,int(port))
             except Exception as  e:
                 self.Ui.textEdit_result.append(
                     "[%s]Error:%s脚本执行错误！\n[Exception]:\n%s" % (
@@ -929,7 +934,7 @@ class MainWindows(QtWidgets.QMainWindow, Ui_MainWindow):  # 主窗口
             box.warning(self, "提示", "该EXP暂无描述信息！")
 def check_update():
     try:
-        response = requests.get("https://qianxiao996.cn/FrameScan-GUI/version.txt",timeout = 1)
+        response = requests.get("https://qianxiao996.cn/FrameScan-GUI/version.txt",timeout = 3)
         if (int(response.text.replace('.',''))>int(version.replace('.',''))):
             reply = QMessageBox.question(window,'软件更新', "检测到软件已发布新版本，是否前去下载?",QMessageBox.Yes | QMessageBox.No,
                                          QMessageBox.Yes)
